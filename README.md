@@ -1,47 +1,52 @@
-# Cities_Skylines_1_Automated_Public_Transport_Planning — Preview
+# Automated Public Transport Planning — Preview
 
-這個 branch 只放 **Preview 網頁**，是一個沒有真實功能的靜態展示頁，讓使用者可以透過實際觀察與操作去了解這個 Mod 打算做什麼。
+This branch holds the **preview site**: a static page with no real functionality, built so people can look around and work out what the mod is meant to do.
 
-> ⚠️ 頁面上的城市、路線、統計數字全部是模擬產生的假資料，與遊戲、與實際 Mod 行為無關。
+> **Warning**
+> Every city, route and statistic on the page is simulated. None of it reflects the game or any real mod behaviour.
 
-## 線上瀏覽
+Other languages: [繁體中文](README_TW.md)
 
-GitHub Pages: https://spacesquare640.github.io/Cities_Skylines_1_Automated_Public_Transport_Planning/
+## Live site
 
-## 內容
+https://spacesquare640.github.io/Cities_Skylines_1_Automated_Public_Transport_Planning/
 
-| 區塊 | 說明 |
+## Sections
+
+| Section | Contents |
 | --- | --- |
-| Hero | 模組定位與基本資訊 |
-| 核心功能 | 自動規劃 / 調整現有路線 / 刪除後重新規劃 / 遊戲內 UI |
-| 互動體驗 | 模擬規劃器：調整覆蓋率、班距、預算與運具，動畫產生路網並更新統計 |
-| 模組介面示意 | 仿遊戲內面板的外觀（按鈕無功能） |
-| 安裝方式 | 預定的安裝流程 |
+| Hero | What the mod is, and its basic details |
+| Core features | Auto-plan / refine existing lines / wipe and replan / in-game UI |
+| Live demo | Simulated planner: set coverage, headway, budget and modes, then watch a network animate in while the statistics update |
+| Mod UI mock-up | How the in-game panel is meant to look; the buttons do nothing |
+| Installation | The intended install flow |
 
-介面預設語言為 **English**，右上角語言選單可切換為以下 11 種語系（對應 Cities: Skylines I 官方支援的語言）：
+## Languages
+
+The interface defaults to **English**. The picker in the header switches to any of eleven locales, matching the languages Cities: Skylines I ships with:
 
 `en` · `zh-Hant` · `zh-Hans` · `ja` · `ko` · `de` · `fr` · `es` · `pt-BR` · `ru` · `pl`
 
-英語內建於 `js/i18n.js`，其餘語系按需載入 `js/i18n/<tag>.json`；任一 key 缺漏會自動回退英語。
+English is embedded in `js/i18n.js`, so the page never blanks or waits on a request. The other locales load on demand from `js/i18n/<tag>.json`, and any key a locale omits falls back to English.
 
-## 檔案結構
+## File layout
 
 ```
-index.html          頁面結構
-css/style.css       樣式
-js/i18n.js          i18n 核心 + 內建英語字典 + 語言選單
-js/i18n/<tag>.json  其餘 10 個語系（按需載入）
-js/demo.js          模擬規劃器（純展示用，無真實演算法）
+index.html          Page structure
+css/style.css       Styles
+js/i18n.js          i18n core, embedded English dictionary, language picker
+js/i18n/<tag>.json  The other ten locales, loaded on demand
+js/demo.js          Simulated planner (display only, no real algorithm)
 ```
 
-## 本地預覽
+## Running it locally
 
 ```bash
 python -m http.server 8000
 ```
 
-然後開啟 http://localhost:8000
+Then open http://localhost:8000
 
-## 其他 branch
+## Other branches
 
-- `Source_Code` — 專案本體的原始碼
+- `Source_Code` — the mod's own source code
