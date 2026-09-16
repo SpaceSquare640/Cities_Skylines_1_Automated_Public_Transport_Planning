@@ -1,23 +1,30 @@
-# Cities_Skylines_1_Automated_Public_Transport_Planning — Source Code
+# Cities Skylines 1 — Automated Public Transport Planning
 
-**Steam Workshop 名稱：** Automated Public Transport Planning
-**適用遊戲：** Cities: Skylines I
+**Steam Workshop name:** Automated Public Transport Planning
+**Game:** Cities: Skylines I
 
-這個 branch 只放 **模組本體的原始碼**。與 App 本體無關的任何代碼或資料（工具、素材、文件、個人筆記等）一律不進入這個 branch。
+This branch holds the **source code of the mod itself**. Nothing unrelated to the application's own source — tooling, assets, documents, personal notes — belongs here.
 
-## 專案目標
+Other languages: [繁體中文](README_TW.md)
 
-在遊戲內提供一套自動化的大眾運輸規劃工具：
+## What the mod does
 
-- **自動規劃** — 依城市分區與通勤需求，自動產生公車 / 地鐵 / 電車路網
-- **調整現有路線** — 保留玩家手動建立的路線，只修正覆蓋不足或重疊的區段
-- **刪除後重新規劃** — 清空既有路線並從零重新計算
-- **遊戲內 UI** — 所有操作與預覽都在遊戲內面板完成
+An in-game toolset that plans public transport for you:
 
-## 狀態
+- **Auto-plan** — reads the city's zoning and commuter demand, then generates a bus / metro / tram network
+- **Refine existing lines** — keeps the lines you drew by hand and only corrects thin coverage or excessive overlap
+- **Wipe and replan** — clears every line and recomputes a network from scratch
+- **In-game UI** — all controls and a preview of the plan live in a panel inside the game
 
-🚧 開發初期，原始碼尚未加入。
+## Status
 
-## 其他 branch
+Early development. No source code has been added yet.
 
-- `Cities_Skylines_1_Automated_Public_Transport_Planning_Preview` — 無真實功能的 Preview 網頁（GitHub Pages）
+## Branches
+
+| Branch | Contents |
+| --- | --- |
+| `Source_Code` (default) | The mod's source code |
+| `Cities_Skylines_1_Automated_Public_Transport_Planning_Preview` | Static preview site, served via GitHub Pages |
+
+**Preview site:** https://spacesquare640.github.io/Cities_Skylines_1_Automated_Public_Transport_Planning/
