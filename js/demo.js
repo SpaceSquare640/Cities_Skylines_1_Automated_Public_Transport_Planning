@@ -13,7 +13,8 @@
   var state = { planned: false, running: false, lines: [] };
 
   /* ---------- 小工具 ---------- */
-  function t(key) { return window.I18N[window.APP_LANG][key] || key; }
+  function t(key) { return window.i18n.t(key); }
+  function nfmt(n) { return n.toLocaleString(window.i18n.bcp47()); }
 
   function mk(tag, attrs) {
     var n = document.createElementNS(SVG, tag);
@@ -157,16 +158,19 @@
     var bud = +document.getElementById("budget").value;
 
     var coverage = Math.min(99, Math.round(cov * (0.82 + lineCount * 0.03)));
-    var wait = (head / 2 + 0.6).toFixed(1);
+    // Locale-aware decimal separator: "3.6" in en, "3,6" in de/fr/ru...
+    var wait = (head / 2 + 0.6).toLocaleString(window.i18n.bcp47(), {
+      minimumFractionDigits: 1, maximumFractionDigits: 1
+    });
     var riders = Math.round(stopCount * 340 * (coverage / 100) * (1 + (15 - head) * 0.04));
     var cost = Math.round((lineCount * 1800 + stopCount * 260) * (1 + bud * 0.08));
 
     document.getElementById("sLines").textContent = lineCount;
     document.getElementById("sStops").textContent = stopCount;
     document.getElementById("sCover").textContent = coverage + "%";
-    document.getElementById("sWait").textContent = wait + " min";
-    document.getElementById("sRiders").textContent = riders.toLocaleString();
-    document.getElementById("sCost").textContent = "₡" + cost.toLocaleString();
+    document.getElementById("sWait").textContent = wait + " " + t("unitMin");
+    document.getElementById("sRiders").textContent = nfmt(riders);
+    document.getElementById("sCost").textContent = "₡" + nfmt(cost);
   }
 
   function runPlan(fromScratch) {
@@ -241,7 +245,7 @@
   function bindControls() {
     var pairs = [
       ["coverage", "coverageOut", function (v) { return v + "%"; }],
-      ["headway", "headwayOut", function (v) { return v + " min"; }],
+      ["headway", "headwayOut", function (v) { return v + " " + t("unitMin"); }],
       ["budget", "budgetOut", function (v) { return v + " / 10"; }]
     ];
     pairs.forEach(function (p) {
@@ -264,11 +268,10 @@
   }
 
   function renderLegend() {
-    var d = window.I18N[window.APP_LANG];
     el.legend.innerHTML =
-      '<span><i class="dot bus"></i> ' + d.modeBus + "</span>" +
-      '<span><i class="dot metro"></i> ' + d.modeMetro + "</span>" +
-      '<span><i class="dot tram"></i> ' + d.modeTram + "</span>";
+      '<span><i class="dot bus"></i> ' + t("modeBus") + "</span>" +
+      '<span><i class="dot metro"></i> ' + t("modeMetro") + "</span>" +
+      '<span><i class="dot tram"></i> ' + t("modeTram") + "</span>";
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -289,10 +292,20 @@
   });
 
   document.addEventListener("langchange", function () {
+    // i18n renders once before this module has looked up its elements.
+    if (!el.legend) return;
     renderLegend();
+    var hw = document.getElementById("headway");
+    if (hw) document.getElementById("headwayOut").textContent = hw.value + " " + t("unitMin");
     if (!state.running) {
       el.status.textContent = state.planned ? t("statusDone") : t("statusIdle");
-      if (!state.planned) { clearLog(); log(t("logIdle")); }
+      if (state.planned) {
+        // Units and number formats are locale-dependent, so redraw the stats.
+        computeStats(el.stops.children.length, state.lines.length);
+      } else {
+        clearLog();
+        log(t("logIdle"));
+      }
     }
   });
 })();

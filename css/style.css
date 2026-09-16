@@ -49,11 +49,17 @@ a:hover{text-decoration:underline}
 .nav{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .nav a{color:var(--muted);font-size:14px}
 .nav a:hover{color:var(--text);text-decoration:none}
-.lang-btn{
-  background:transparent;border:1px solid var(--line);color:var(--text);
-  border-radius:6px;padding:4px 11px;font-size:12px;cursor:pointer;
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
 }
-.lang-btn:hover{border-color:var(--accent);color:var(--accent)}
+.lang-picker{display:inline-flex;align-items:center}
+.lang-picker select{
+  background:var(--panel);border:1px solid var(--line);color:var(--text);
+  border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer;font-family:inherit;
+}
+.lang-picker select:hover{border-color:var(--accent)}
+.lang-picker select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
 /* hero */
 .hero{padding:64px 0 56px;background:radial-gradient(1000px 420px at 75% -10%,rgba(63,185,255,.14),transparent 70%)}
