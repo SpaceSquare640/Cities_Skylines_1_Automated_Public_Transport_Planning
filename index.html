@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automated Public Transport Planning — Preview</title>
+<meta name="description" content="Cities: Skylines 1 mod — automated public transport route planning. Interactive preview.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="preview-banner"><span data-i18n="banner"></span></div>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <div class="brand">
+      <div class="brand-mark">APT</div>
+      <div class="brand-text">
+        <strong>Automated Public Transport Planning</strong>
+        <span data-i18n="brandSub"></span>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="#features" data-i18n="navFeatures"></a>
+      <a href="#demo" data-i18n="navDemo"></a>
+      <a href="#panel" data-i18n="navPanel"></a>
+      <a href="#install" data-i18n="navInstall"></a>
+      <button id="langToggle" class="lang-btn" type="button">EN</button>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow" data-i18n="heroEyebrow"></p>
+      <h1 data-i18n="heroTitle"></h1>
+      <p class="lead" data-i18n="heroLead"></p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#demo" data-i18n="heroCta"></a>
+        <a class="btn btn-ghost" href="https://github.com/SpaceSquare640/Cities_Skylines_1_Automated_Public_Transport_Planning" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <ul class="hero-meta">
+        <li><span data-i18n="metaGameL"></span><b>Cities: Skylines I</b></li>
+        <li><span data-i18n="metaDistL"></span><b>Steam Workshop</b></li>
+        <li><span data-i18n="metaLicL"></span><b data-i18n="metaLicV"></b></li>
+      </ul>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="art-grid"></div>
+      <div class="art-line l1"></div>
+      <div class="art-line l2"></div>
+      <div class="art-line l3"></div>
+    </div>
+  </div>
+</section>
+
+<section id="features" class="section">
+  <div class="wrap">
+    <h2 data-i18n="featTitle"></h2>
+    <p class="section-lead" data-i18n="featLead"></p>
+    <div class="cards">
+      <article class="card">
+        <div class="card-icon">◎</div>
+        <h3 data-i18n="f1t"></h3>
+        <p data-i18n="f1d"></p>
+      </article>
+      <article class="card">
+        <div class="card-icon">⇄</div>
+        <h3 data-i18n="f2t"></h3>
+        <p data-i18n="f2d"></p>
+      </article>
+      <article class="card">
+        <div class="card-icon">↻</div>
+        <h3 data-i18n="f3t"></h3>
+        <p data-i18n="f3d"></p>
+      </article>
+      <article class="card">
+        <div class="card-icon">▦</div>
+        <h3 data-i18n="f4t"></h3>
+        <p data-i18n="f4d"></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="demo" class="section section-alt">
+  <div class="wrap">
+    <h2 data-i18n="demoTitle"></h2>
+    <p class="section-lead" data-i18n="demoLead"></p>
+
+    <div class="demo">
+      <div class="demo-map">
+        <svg id="cityMap" viewBox="0 0 800 560" role="img" aria-label="Simulated city map">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M40 0 L0 0 0 40" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="800" height="560" fill="url(#grid)"></rect>
+          <g id="zonesLayer"></g>
+          <g id="roadsLayer"></g>
+          <g id="linesLayer"></g>
+          <g id="stopsLayer"></g>
+        </svg>
+        <div class="map-legend" id="mapLegend"></div>
+        <div class="map-status" id="mapStatus"></div>
+      </div>
+
+      <aside class="demo-panel">
+        <div class="panel-title" data-i18n="ctrlTitle"></div>
+
+        <label class="ctrl">
+          <span data-i18n="ctrlCoverage"></span>
+          <input type="range" id="coverage" min="40" max="98" value="78">
+          <output id="coverageOut">78%</output>
+        </label>
+
+        <label class="ctrl">
+          <span data-i18n="ctrlHeadway"></span>
+          <input type="range" id="headway" min="2" max="15" value="6">
+          <output id="headwayOut">6 min</output>
+        </label>
+
+        <label class="ctrl">
+          <span data-i18n="ctrlBudget"></span>
+          <input type="range" id="budget" min="1" max="10" value="6">
+          <output id="budgetOut">6 / 10</output>
+        </label>
+
+        <fieldset class="modes">
+          <legend data-i18n="ctrlModes"></legend>
+          <label><input type="checkbox" data-mode="bus" checked> <i class="dot bus"></i><span data-i18n="modeBus"></span></label>
+          <label><input type="checkbox" data-mode="metro" checked> <i class="dot metro"></i><span data-i18n="modeMetro"></span></label>
+          <label><input type="checkbox" data-mode="tram" checked> <i class="dot tram"></i><span data-i18n="modeTram"></span></label>
+        </fieldset>
+
+        <div class="panel-actions">
+          <button id="btnPlan" class="btn btn-primary btn-block" type="button" data-i18n="btnPlan"></button>
+          <button id="btnAdjust" class="btn btn-ghost btn-block" type="button" data-i18n="btnAdjust"></button>
+          <button id="btnReset" class="btn btn-danger btn-block" type="button" data-i18n="btnReset"></button>
+        </div>
+
+        <div class="stats" id="stats">
+          <div class="stat"><span data-i18n="statLines"></span><b id="sLines">0</b></div>
+          <div class="stat"><span data-i18n="statStops"></span><b id="sStops">0</b></div>
+          <div class="stat"><span data-i18n="statCover"></span><b id="sCover">0%</b></div>
+          <div class="stat"><span data-i18n="statWait"></span><b id="sWait">—</b></div>
+          <div class="stat"><span data-i18n="statRiders"></span><b id="sRiders">0</b></div>
+          <div class="stat"><span data-i18n="statCost"></span><b id="sCost">0</b></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="log" id="log" aria-live="polite"></div>
+  </div>
+</section>
+
+<section id="panel" class="section">
+  <div class="wrap">
+    <h2 data-i18n="uiTitle"></h2>
+    <p class="section-lead" data-i18n="uiLead"></p>
+
+    <div class="game-ui">
+      <div class="gu-titlebar">
+        <span data-i18n="guTitle"></span>
+        <span class="gu-x">✕</span>
+      </div>
+      <div class="gu-tabs">
+        <button class="gu-tab is-active" data-tab="plan" data-i18n="guTab1"></button>
+        <button class="gu-tab" data-tab="lines" data-i18n="guTab2"></button>
+        <button class="gu-tab" data-tab="opts" data-i18n="guTab3"></button>
+      </div>
+      <div class="gu-body">
+        <div class="gu-pane is-active" data-pane="plan">
+          <p class="gu-hint" data-i18n="guPlanHint"></p>
+          <div class="gu-row"><span data-i18n="guRowScope"></span><b data-i18n="guRowScopeV"></b></div>
+          <div class="gu-row"><span data-i18n="guRowMode"></span><b data-i18n="guRowModeV"></b></div>
+          <div class="gu-row"><span data-i18n="guRowKeep"></span><b data-i18n="guRowKeepV"></b></div>
+          <button class="gu-btn" data-i18n="guPlanBtn"></button>
+        </div>
+        <div class="gu-pane" data-pane="lines">
+          <div class="gu-line"><i class="dot bus"></i>Bus Line 01 — Downtown Loop <em>12 stops</em></div>
+          <div class="gu-line"><i class="dot bus"></i>Bus Line 02 — Industrial Feeder <em>9 stops</em></div>
+          <div class="gu-line"><i class="dot metro"></i>Metro M1 — North / South <em>7 stations</em></div>
+          <div class="gu-line"><i class="dot tram"></i>Tram T1 — Riverside <em>10 stops</em></div>
+          <p class="gu-hint" data-i18n="guLinesHint"></p>
+        </div>
+        <div class="gu-pane" data-pane="opts">
+          <div class="gu-row"><span data-i18n="guOpt1"></span><b>ON</b></div>
+          <div class="gu-row"><span data-i18n="guOpt2"></span><b>ON</b></div>
+          <div class="gu-row"><span data-i18n="guOpt3"></span><b>OFF</b></div>
+          <div class="gu-row"><span data-i18n="guOpt4"></span><b>6 min</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install" class="section section-alt">
+  <div class="wrap">
+    <h2 data-i18n="insTitle"></h2>
+    <ol class="steps">
+      <li><span data-i18n="ins1"></span></li>
+      <li><span data-i18n="ins2"></span></li>
+      <li><span data-i18n="ins3"></span></li>
+      <li><span data-i18n="ins4"></span></li>
+    </ol>
+    <div class="notice" data-i18n="insNote"></div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <span data-i18n="footNote"></span>
+    <a href="https://github.com/SpaceSquare640/Cities_Skylines_1_Automated_Public_Transport_Planning" target="_blank" rel="noopener">GitHub Repository</a>
+  </div>
+</footer>
+
+<script src="js/i18n.js"></script>
+<script src="js/demo.js"></script>
+</body>
+</html>
