@@ -18,15 +18,20 @@ GitHub Pages: https://spacesquare640.github.io/Cities_Skylines_1_Automated_Publi
 | 模組介面示意 | 仿遊戲內面板的外觀（按鈕無功能） |
 | 安裝方式 | 預定的安裝流程 |
 
-介面支援 **中文 / English** 切換（右上角按鈕）。
+介面預設語言為 **English**，右上角語言選單可切換為以下 11 種語系（對應 Cities: Skylines I 官方支援的語言）：
+
+`en` · `zh-Hant` · `zh-Hans` · `ja` · `ko` · `de` · `fr` · `es` · `pt-BR` · `ru` · `pl`
+
+英語內建於 `js/i18n.js`，其餘語系按需載入 `js/i18n/<tag>.json`；任一 key 缺漏會自動回退英語。
 
 ## 檔案結構
 
 ```
-index.html        頁面結構
-css/style.css     樣式
-js/i18n.js        雙語字典與切換
-js/demo.js        模擬規劃器（純展示用，無真實演算法）
+index.html          頁面結構
+css/style.css       樣式
+js/i18n.js          i18n 核心 + 內建英語字典 + 語言選單
+js/i18n/<tag>.json  其餘 10 個語系（按需載入）
+js/demo.js          模擬規劃器（純展示用，無真實演算法）
 ```
 
 ## 本地預覽
