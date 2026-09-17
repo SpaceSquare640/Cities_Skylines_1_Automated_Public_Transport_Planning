@@ -18,7 +18,32 @@
 
 ## 狀態
 
-開發初期，原始碼尚未加入。
+開發初期。模組已可載入、唯讀盤點城市、放置站點；規劃器本身尚未撰寫。
+
+## 建置
+
+需要安裝遊戲，以及 MSBuild（Visual Studio 2022 Build Tools 即可）。**不需要**安裝
+.NET Framework 3.5 targeting pack —— 本專案直接編譯至遊戲 `Cities_Data/Managed`
+目錄下隨附的組件。
+
+若建置找不到遊戲，將 `Local.props.example` 複製為 `Local.props` 並設定
+`CitiesSkylinesDir`。另外設定 `ModsDir` 可讓建置成功後自動把組件複製進遊戲的本機模組
+資料夾。`Local.props` 已被 git 忽略，不會把任何人的本機路徑帶進儲存庫。
+
+```
+MSBuild AutomatedPublicTransportPlanning/AutomatedPublicTransportPlanning.csproj /p:Configuration=Release
+```
+
+## 結構
+
+```
+AutomatedPublicTransportPlanning/
+  Source/Mod.cs               IUserMod 進入點
+  Source/Loader.cs            載入存檔時的唯讀城市盤點
+  Source/Planning/            站點放置與 prefab 解析
+  Source/Spike/               暫時性診斷碼，用完即移除
+  Source/Util/Log.cs
+```
 
 ## Branch 結構
 

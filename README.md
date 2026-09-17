@@ -18,7 +18,35 @@ An in-game toolset that plans public transport for you:
 
 ## Status
 
-Early development. No source code has been added yet.
+Early development. The mod loads, surveys a city read-only, and can place stops;
+the planner itself is not written yet.
+
+## Building
+
+Requires the game installed and either MSBuild (Visual Studio 2022 Build Tools is
+enough) or an equivalent. The .NET Framework 3.5 targeting pack is **not** needed:
+the project compiles against the assemblies shipped with the game, under
+`Cities_Data/Managed`.
+
+Copy `Local.props.example` to `Local.props` and point `CitiesSkylinesDir` at your
+install if the build cannot find it on its own. Set `ModsDir` as well to have a
+successful build copy the assembly straight into the game's local mods folder.
+`Local.props` is git-ignored, so nobody's paths end up in the repository.
+
+```
+MSBuild AutomatedPublicTransportPlanning/AutomatedPublicTransportPlanning.csproj /p:Configuration=Release
+```
+
+## Layout
+
+```
+AutomatedPublicTransportPlanning/
+  Source/Mod.cs               IUserMod entry point
+  Source/Loader.cs            read-only city survey on level load
+  Source/Planning/            stop placement and prefab resolution
+  Source/Spike/               throwaway diagnostics, removed once they have served
+  Source/Util/Log.cs
+```
 
 ## Branches
 
