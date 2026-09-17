@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy this file to Local.props and adjust the paths for your machine.
+  Local.props is git-ignored so nobody's local paths end up in the repository.
+
+  CitiesSkylinesDir  The game's install folder (the one containing Cities.exe).
+                     Only needed if the game is somewhere the build cannot guess.
+  ModsDir            Optional. When set, a successful build copies the assembly
+                     into this folder so the game picks it up on next start.
+                     Usually:
+                     %LOCALAPPDATA%\Colossal Order\Cities_Skylines\Addons\Mods
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <CitiesSkylinesDir>C:\Program Files (x86)\Steam\steamapps\common\Cities_Skylines</CitiesSkylinesDir>
+    <!-- <ModsDir>C:\Users\YOU\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods</ModsDir> -->
+  </PropertyGroup>
+</Project>

@@ -12,6 +12,9 @@ obj/
 Thumbs.db
 .DS_Store
 
-# 與 App 本體無關的資料一律不入庫
+# Anything unrelated to the mod's own source stays out of this branch
 Resource/
 *.lnk
+
+# Machine-specific build settings
+Local.props

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+    Cities: Skylines I runs on the Mono runtime that shipped with Unity 5
+    (metadata runtime v2.0.50727), so the mod targets .NET Framework 3.5.
+
+    The .NET 3.5 targeting pack is not required: the game ships its own
+    mscorlib/System/System.Core under Cities_Data\Managed, and those are the
+    exact assemblies the mod will run against. NoStdLib turns off the implicit
+    framework reference so the game's copies are used instead.
+  -->
+
+  <!-- Local.props is machine-specific and is not committed. See Local.props.example. -->
+  <Import Project="$(MSBuildThisFileDirectory)Local.props" Condition="Exists('$(MSBuildThisFileDirectory)Local.props')" />
+
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>Library</OutputType>
+    <RootNamespace>AutomatedPublicTransportPlanning</RootNamespace>
+    <AssemblyName>AutomatedPublicTransportPlanning</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <FileAlignment>512</FileAlignment>
+    <LangVersion>5</LangVersion>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+
+  <!--
+    MSBuild resolves reference assembly paths before it ever looks at NoStdLib, so
+    without the v3.5 targeting pack installed it fails with MSB3644/MSB3645 even
+    though nothing from that pack is needed. Pointing these two internal properties
+    at an existing directory satisfies the check; the actual references still come
+    from the game's Managed folder below.
+
+    This is the usual workaround for Unity-era mod projects. If the targeting pack
+    is installed on a given machine, this stays harmless.
+  -->
+  <PropertyGroup>
+    <_TargetFrameworkDirectories>$(MSBuildThisFileDirectory)</_TargetFrameworkDirectories>
+    <_FullFrameworkReferenceAssemblyPaths>$(MSBuildThisFileDirectory)</_FullFrameworkReferenceAssemblyPaths>
+  </PropertyGroup>
+
+  <!--
+    Where the game is installed. Resolution order:
+      1. CitiesSkylinesDir set in Local.props
+      2. CITIES_SKYLINES_DIR environment variable
+      3. Common Steam locations, first one that exists
+    Override rather than editing this file, so the repo stays machine-agnostic.
+  -->
+  <PropertyGroup>
+    <CitiesSkylinesDir Condition=" '$(CitiesSkylinesDir)' == '' ">$(CITIES_SKYLINES_DIR)</CitiesSkylinesDir>
+
+    <_CandidateA>C:\Program Files (x86)\Steam\steamapps\common\Cities_Skylines</_CandidateA>
+    <_CandidateB>C:\SteamLibrary\steamapps\common\Cities_Skylines</_CandidateB>
+    <_CandidateC>D:\SteamLibrary\steamapps\common\Cities_Skylines</_CandidateC>
+    <_CandidateD>E:\SteamLibrary\steamapps\common\Cities_Skylines</_CandidateD>
+
+    <CitiesSkylinesDir Condition=" '$(CitiesSkylinesDir)' == '' And Exists('$(_CandidateA)\Cities_Data\Managed\ICities.dll') ">$(_CandidateA)</CitiesSkylinesDir>
+    <CitiesSkylinesDir Condition=" '$(CitiesSkylinesDir)' == '' And Exists('$(_CandidateB)\Cities_Data\Managed\ICities.dll') ">$(_CandidateB)</CitiesSkylinesDir>
+    <CitiesSkylinesDir Condition=" '$(CitiesSkylinesDir)' == '' And Exists('$(_CandidateC)\Cities_Data\Managed\ICities.dll') ">$(_CandidateC)</CitiesSkylinesDir>
+    <CitiesSkylinesDir Condition=" '$(CitiesSkylinesDir)' == '' And Exists('$(_CandidateD)\Cities_Data\Managed\ICities.dll') ">$(_CandidateD)</CitiesSkylinesDir>
+
+    <ManagedDir>$(CitiesSkylinesDir)\Cities_Data\Managed</ManagedDir>
+  </PropertyGroup>
+
+  <Target Name="VerifyGamePath" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition=" !Exists('$(ManagedDir)\ICities.dll') "
+           Text="Cities: Skylines managed assemblies not found. Expected ICities.dll under '$(ManagedDir)'. Copy Local.props.example to Local.props and set CitiesSkylinesDir, or set the CITIES_SKYLINES_DIR environment variable." />
+  </Target>
+
+  <!-- Runtime assemblies, taken from the game so the build matches what it runs on. -->
+  <ItemGroup>
+    <Reference Include="mscorlib">
+      <HintPath>$(ManagedDir)\mscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>$(ManagedDir)\System.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!--
+      Must carry the full identity. With a bare "System.Core", MSBuild resolves the
+      primary reference by simple name, never looks at HintPath, and then discards
+      it in favour of the unresolved entry when Assembly-CSharp pulls in the same
+      assembly as a dependency (MSB3245, then CS0012 on System.Action).
+    -->
+    <Reference Include="System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+      <HintPath>$(ManagedDir)\System.Core.dll</HintPath>
+      <SpecificVersion>True</SpecificVersion>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Game assemblies. Private=false: never copy these next to the mod. -->
+  <ItemGroup>
+    <Reference Include="ICities">
+      <HintPath>$(ManagedDir)\ICities.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ColossalManaged">
+      <HintPath>$(ManagedDir)\ColossalManaged.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Source\Mod.cs" />
+    <Compile Include="Source\Loader.cs" />
+    <Compile Include="Source\Util\Log.cs" />
+    <Compile Include="Source\Planning\BusPrefabResolver.cs" />
+    <Compile Include="Source\Planning\StopPlacement.cs" />
+    <Compile Include="Source\Spike\SaveRoundTripSpike.cs" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+  <!--
+    Optional deploy step. Set ModsDir in Local.props to have the built assembly
+    copied into the game's local mods folder after a successful build.
+  -->
+  <Target Name="DeployToMods" AfterTargets="Build" Condition=" '$(ModsDir)' != '' ">
+    <MakeDir Directories="$(ModsDir)\$(AssemblyName)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModsDir)\$(AssemblyName)" />
+    <Message Importance="high" Text="Deployed $(AssemblyName).dll to $(ModsDir)\$(AssemblyName)" />
+  </Target>
+
+</Project>
