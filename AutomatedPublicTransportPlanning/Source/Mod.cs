@@ -35,16 +35,25 @@ namespace AutomatedPublicTransportPlanning
             Log.Info("Settings UI requested.");
 
             UIHelperBase diagnostics = helper.AddGroup("Diagnostics");
-            diagnostics.AddButton("Write a test line to the log", OnDiagnosticsButton);
-            diagnostics.AddButton("List bus prefabs in detail", BusPrefabResolver.DumpBusPrefabs);
+            diagnostics.AddButton("Write a test line to the log", Guarded("diagnostics", OnDiagnosticsButton));
+            diagnostics.AddButton("List bus prefabs in detail", Guarded("bus prefab dump", BusPrefabResolver.DumpBusPrefabs));
 
             // Throwaway controls for the save round-trip spike. These write to the
             // loaded city, so they are kept in their own clearly labelled group and
             // will be removed once the spike has served its purpose.
             UIHelperBase spike = helper.AddGroup("Spike 1 - save round trip (writes to your city)");
-            spike.AddButton("1. Create a test bus line", SaveRoundTripSpike.CreateTestLine);
-            spike.AddButton("2. Report test lines", SaveRoundTripSpike.ReportTestLines);
-            spike.AddButton("3. Remove test lines", SaveRoundTripSpike.RemoveTestLines);
+            spike.AddButton("1. Create a test bus line", Guarded("create test line", SaveRoundTripSpike.CreateTestLine));
+            spike.AddButton("2. Report test lines", Guarded("report test lines", SaveRoundTripSpike.ReportTestLines));
+            spike.AddButton("3. Remove test lines", Guarded("remove test lines", SaveRoundTripSpike.RemoveTestLines));
+        }
+
+        /// <summary>
+        /// Wraps a button handler so nothing it throws reaches the game's UI event
+        /// dispatcher.
+        /// </summary>
+        private static OnButtonClicked Guarded(string context, OnButtonClicked handler)
+        {
+            return delegate { Log.Guard(context, delegate { handler(); }); };
         }
 
         private static void OnDiagnosticsButton()

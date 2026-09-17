@@ -7,11 +7,9 @@ namespace AutomatedPublicTransportPlanning.Planning
     /// Works out where a stop may legally sit on a road segment.
     ///
     /// The game does this in TransportTool.GetStopPosition, which is private, so the
-    /// same steps are reproduced here from the public pieces it calls: snap to the
-    /// segment's pedestrian lane, then let the lane geometry produce the exact stop
-    /// position. Keeping our own copy avoids reflecting into a private method whose
-    /// signature could change, at the cost of having to track the original if the
-    /// game's rules ever move.
+    /// same steps are reproduced here from the public pieces it calls. Keeping our
+    /// own copy avoids reflecting into a private method whose signature could change,
+    /// at the cost of having to track the original if the game's rules ever move.
     /// </summary>
     public static class StopPlacement
     {
@@ -30,6 +28,20 @@ namespace AutomatedPublicTransportPlanning.Planning
         /// <summary>
         /// Computes the stop position for a segment, or returns false when the
         /// segment cannot host a stop for this transport type.
+        ///
+        /// The original has two paths and they produce different positions:
+        ///
+        ///   m_vehicleType == None  (pedestrian lines) — the stop sits on the
+        ///     pedestrian lane itself.
+        ///   m_vehicleType != None  (bus, tram, ...)   — the pedestrian lane is only
+        ///     used to find the spot; a second search then picks the vehicle lane,
+        ///     and the stop sits on that.
+        ///
+        /// A bus prefab carries m_vehicleType = Car (confirmed in-game), so buses take
+        /// the second path. Placing a bus stop on the pedestrian lane instead puts it
+        /// roughly a lane width away from where the game would, which is close enough
+        /// for the path finder's 32m search to usually recover — and therefore fails
+        /// intermittently rather than outright.
         /// </summary>
         public static bool TryGetStopPosition(ushort segmentId, Vector3 near, TransportInfo info,
                                               out Vector3 stopPosition, out bool fixedPlatform)
@@ -43,46 +55,71 @@ namespace AutomatedPublicTransportPlanning.Planning
             }
 
             NetManager net = Singleton<NetManager>.instance;
-            NetSegment segment = net.m_segments.m_buffer[segmentId];
 
-            if ((segment.m_flags & NetSegment.Flags.Created) == NetSegment.Flags.None)
+            if ((net.m_segments.m_buffer[segmentId].m_flags & NetSegment.Flags.Created) == NetSegment.Flags.None)
             {
                 return false;
             }
 
-            NetInfo segmentInfo = segment.Info;
+            NetInfo segmentInfo = net.m_segments.m_buffer[segmentId].Info;
             if (segmentInfo == null || segmentInfo.m_lanes == null)
             {
                 return false;
             }
 
-            Vector3 lanePosition;
-            uint laneId;
-            int laneIndex;
-            float laneOffset;
+            // Step one: find the pedestrian lane. Its position anchors the search
+            // that follows, and its flags decide whether another kind of stop is
+            // already sitting here.
+            Vector3 pedestrianPosition;
+            uint pedestrianLaneId;
+            int pedestrianLaneIndex;
+            float pedestrianOffset;
 
-            bool found = net.m_segments.m_buffer[segmentId].GetClosestLanePosition(
-                near,
-                NetInfo.LaneType.Pedestrian,
-                VehicleInfo.VehicleType.None,
-                info.vehicleCategory,
-                info.m_vehicleType,
-                out lanePosition,
-                out laneId,
-                out laneIndex,
-                out laneOffset);
-
-            if (!found || laneIndex < 0 || laneIndex >= segmentInfo.m_lanes.Length)
+            if (!net.m_segments.m_buffer[segmentId].GetClosestLanePosition(
+                    near,
+                    NetInfo.LaneType.Pedestrian,
+                    VehicleInfo.VehicleType.None,
+                    info.vehicleCategory,
+                    info.m_vehicleType,
+                    out pedestrianPosition,
+                    out pedestrianLaneId,
+                    out pedestrianLaneIndex,
+                    out pedestrianOffset))
             {
                 return false;
             }
 
-            // A lane that already carries a different kind of stop cannot take ours.
-            NetLane.Flags laneStopFlags = (NetLane.Flags)net.m_lanes.m_buffer[laneId].m_flags & NetLane.Flags.Stops;
+            if (info.m_vehicleType == VehicleInfo.VehicleType.None)
+            {
+                return TryPedestrianStop(segmentId, segmentInfo, info,
+                                         pedestrianLaneId, pedestrianLaneIndex,
+                                         out stopPosition, out fixedPlatform);
+            }
+
+            return TryVehicleStop(segmentId, segmentInfo, info,
+                                  pedestrianPosition, pedestrianLaneId,
+                                  out stopPosition, out fixedPlatform);
+        }
+
+        /// <summary>
+        /// Pedestrian lines: the stop sits on the pedestrian lane. Only this path
+        /// clears the wanted stop flag for dedicated networks.
+        /// </summary>
+        private static bool TryPedestrianStop(ushort segmentId, NetInfo segmentInfo, TransportInfo info,
+                                              uint pedestrianLaneId, int pedestrianLaneIndex,
+                                              out Vector3 stopPosition, out bool fixedPlatform)
+        {
+            stopPosition = Vector3.zero;
+            fixedPlatform = false;
+
+            NetManager net = Singleton<NetManager>.instance;
+
+            NetLane.Flags laneStopFlags = (NetLane.Flags)net.m_lanes.m_buffer[pedestrianLaneId].m_flags & NetLane.Flags.Stops;
             NetLane.Flags wantedStopFlag = info.m_stopFlag;
+
+            // Dedicated networks (tracks, canals) do not use the road stop flags.
             if (segmentInfo.m_vehicleTypes != VehicleInfo.VehicleType.None)
             {
-                // Dedicated networks (tracks, canals) do not use the road stop flags.
                 wantedStopFlag = NetLane.Flags.None;
             }
 
@@ -93,14 +130,14 @@ namespace AutomatedPublicTransportPlanning.Planning
                 return false;
             }
 
-            float stopOffset = segmentInfo.m_lanes[laneIndex].m_stopOffset;
-            if ((segment.m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None)
+            float stopOffset = segmentInfo.m_lanes[pedestrianLaneIndex].m_stopOffset;
+            if ((net.m_segments.m_buffer[segmentId].m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None)
             {
                 stopOffset = -stopOffset;
             }
 
             Vector3 direction;
-            net.m_lanes.m_buffer[laneId].CalculateStopPositionAndDirection(
+            net.m_lanes.m_buffer[pedestrianLaneId].CalculateStopPositionAndDirection(
                 LaneMidpoint, stopOffset, out stopPosition, out direction);
 
             fixedPlatform = true;
@@ -108,30 +145,96 @@ namespace AutomatedPublicTransportPlanning.Planning
         }
 
         /// <summary>
-        /// Asks the path manager whether a vehicle of this type could actually reach
-        /// the position. A stop that fails this will leave the line marked as not
-        /// connected once the asynchronous path find catches up, so it is worth
-        /// checking before the stop is ever created.
-        ///
-        /// FindPathPosition returns two positions: a pedestrian one and a vehicle
-        /// one. Its boolean result only tells us that the pedestrian side was found,
-        /// which is why an earlier version of this check passed every stop and the
-        /// line still came back with failed paths. The vehicle position is the part
-        /// that decides whether a bus can get there, so it is what we test.
+        /// Vehicle lines: a second search, anchored on the pedestrian lane position,
+        /// picks the lane the vehicle will stop in. Note that the stop flags are still
+        /// read from the pedestrian lane, and that there is no clearing of the wanted
+        /// flag here — both match the original.
         /// </summary>
-        public static bool IsReachable(Vector3 position, TransportInfo info)
+        private static bool TryVehicleStop(ushort segmentId, NetInfo segmentInfo, TransportInfo info,
+                                           Vector3 pedestrianPosition, uint pedestrianLaneId,
+                                           out Vector3 stopPosition, out bool fixedPlatform)
+        {
+            stopPosition = Vector3.zero;
+            fixedPlatform = false;
+
+            NetManager net = Singleton<NetManager>.instance;
+
+            Vector3 vehiclePosition;
+            uint vehicleLaneId;
+            int vehicleLaneIndex;
+            float vehicleOffset;
+
+            if (!net.m_segments.m_buffer[segmentId].GetClosestLanePosition(
+                    pedestrianPosition,
+                    NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle,
+                    info.m_vehicleType,
+                    info.vehicleCategory,
+                    out vehiclePosition,
+                    out vehicleLaneId,
+                    out vehicleLaneIndex,
+                    out vehicleOffset))
+            {
+                return false;
+            }
+
+            if (vehicleLaneIndex < 0 || vehicleLaneIndex >= segmentInfo.m_lanes.Length)
+            {
+                return false;
+            }
+
+            // Stop flags come from the pedestrian lane even on this path.
+            NetLane.Flags laneStopFlags = (NetLane.Flags)net.m_lanes.m_buffer[pedestrianLaneId].m_flags & NetLane.Flags.Stops;
+            if (laneStopFlags != NetLane.Flags.None &&
+                info.m_stopFlag != NetLane.Flags.None &&
+                laneStopFlags != info.m_stopFlag)
+            {
+                return false;
+            }
+
+            float stopOffset = segmentInfo.m_lanes[vehicleLaneIndex].m_stopOffset;
+            if ((net.m_segments.m_buffer[segmentId].m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None)
+            {
+                stopOffset = -stopOffset;
+            }
+
+            Vector3 direction;
+            net.m_lanes.m_buffer[vehicleLaneId].CalculateStopPositionAndDirection(
+                LaneMidpoint, stopOffset, out stopPosition, out direction);
+
+            fixedPlatform = true;
+            return true;
+        }
+
+        /// <summary>
+        /// Whether the path manager can anchor a stop at this position at all: is
+        /// there a lane within the search radius that a stop could attach to. This is
+        /// the same question TransportLineAI.StartPathFind asks for each end of a
+        /// line segment, so a position that fails here will certainly fail there.
+        ///
+        /// What it does NOT answer is whether a bus can drive from one stop to the
+        /// next. That is a property of a pair of stops, not of a single one, and only
+        /// the asynchronous path find can settle it — which is why the validation
+        /// loop checks PathFailed after the stops exist, rather than trying to rule
+        /// every problem out in advance.
+        ///
+        /// Note on the two out positions: pathPosA and pathPosB are the closest
+        /// forward-direction and backward-direction lanes, not a pedestrian and a
+        /// vehicle position. pathPosB is legitimately zero on a one-way street, so
+        /// testing it rejects perfectly good stops.
+        /// </summary>
+        public static bool CanAnchorStop(Vector3 position, TransportInfo info)
         {
             if (info == null)
             {
                 return false;
             }
 
-            PathUnit.Position pedestrianPos;
-            PathUnit.Position vehiclePos;
-            float pedestrianDistance;
-            float vehicleDistance;
+            PathUnit.Position forwardPos;
+            PathUnit.Position backwardPos;
+            float forwardDistance;
+            float backwardDistance;
 
-            bool found = PathManager.FindPathPosition(
+            return PathManager.FindPathPosition(
                 position,
                 info.m_netService,
                 info.m_secondaryNetService,
@@ -144,23 +247,22 @@ namespace AutomatedPublicTransportPlanning.Planning
                 PathSearchRadius,
                 false,
                 true,
-                out pedestrianPos,
-                out vehiclePos,
-                out pedestrianDistance,
-                out vehicleDistance);
-
-            // A zero segment on the vehicle position means nothing drivable was found
-            // within the search radius, however good the pedestrian side looked.
-            return found && vehiclePos.m_segment != 0;
+                out forwardPos,
+                out backwardPos,
+                out forwardDistance,
+                out backwardDistance);
         }
 
         /// <summary>
-        /// Whether a segment is a road a bus could serve: it needs a lane the vehicle
-        /// can drive on as well as the pedestrian lane the stop itself attaches to.
+        /// Whether a segment is a road this transport type could serve.
         ///
-        /// Filtering on the pedestrian lane alone lets footpaths, park paths and
-        /// pedestrian streets through — they carry pedestrian lanes and no car lane
-        /// at all, so stops placed on them can never be served.
+        /// The vehicle test is on m_vehicleCategories rather than m_vehicleTypes: the
+        /// latter only goes as far as "Car", which cannot tell a road that allows
+        /// buses from one that does not. This mirrors what the game's own road picker
+        /// (PublicTransportPanel.IsRoadEligibleToPublicTransport) checks.
+        ///
+        /// The excluded flags are the same ones PathManager.FindPathPosition skips, so
+        /// ruling them out here avoids offering candidates that could never anchor.
         /// </summary>
         public static bool IsSegmentUsableForStops(ushort segmentId, TransportInfo info)
         {
@@ -171,7 +273,21 @@ namespace AutomatedPublicTransportPlanning.Planning
 
             NetManager net = Singleton<NetManager>.instance;
 
-            if ((net.m_segments.m_buffer[segmentId].m_flags & NetSegment.Flags.Created) == NetSegment.Flags.None)
+            NetSegment.Flags flags = net.m_segments.m_buffer[segmentId].m_flags;
+
+            if ((flags & NetSegment.Flags.Created) == NetSegment.Flags.None)
+            {
+                return false;
+            }
+
+            // Untouchable segments belong to a station building and take a different
+            // path in the original (FindOwnerBuilding), which this does not implement.
+            if ((flags & (NetSegment.Flags.Collapsed | NetSegment.Flags.Flooded | NetSegment.Flags.Untouchable)) != NetSegment.Flags.None)
+            {
+                return false;
+            }
+
+            if ((net.m_segments.m_buffer[segmentId].m_flags2 & NetSegment.Flags2.EventClosed) != NetSegment.Flags2.None)
             {
                 return false;
             }
@@ -182,20 +298,24 @@ namespace AutomatedPublicTransportPlanning.Planning
                 return false;
             }
 
-            // The stop needs somewhere for passengers to stand.
+            if (segmentInfo.m_netAI != null && segmentInfo.m_netAI.IsUnderground())
+            {
+                return false;
+            }
+
+            // Passengers need somewhere to stand.
             if ((segmentInfo.m_laneTypes & NetInfo.LaneType.Pedestrian) == NetInfo.LaneType.None)
             {
                 return false;
             }
 
-            // And the vehicle needs somewhere to drive.
-            if ((segmentInfo.m_laneTypes & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.None &&
-                (segmentInfo.m_laneTypes & NetInfo.LaneType.TransportVehicle) == NetInfo.LaneType.None)
+            // And the vehicle needs a lane it is allowed to use.
+            if ((segmentInfo.m_laneTypes & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle)) == NetInfo.LaneType.None)
             {
                 return false;
             }
 
-            if ((segmentInfo.m_vehicleTypes & info.m_vehicleType) == VehicleInfo.VehicleType.None)
+            if ((segmentInfo.m_vehicleCategories & info.vehicleCategory) == VehicleInfo.VehicleCategory.None)
             {
                 return false;
             }

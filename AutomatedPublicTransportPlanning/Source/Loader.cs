@@ -85,6 +85,17 @@ namespace AutomatedPublicTransportPlanning
         private static void ReportBusDepots()
         {
             BuildingManager buildings = Singleton<BuildingManager>.instance;
+
+            // Matching on TransportType.Bus alone also counts intercity bus depots,
+            // which cannot serve a city line. Compare against the resolved city bus
+            // prefab instead.
+            TransportInfo cityBus = Planning.BusPrefabResolver.ResolveCityBus();
+            if (cityBus == null)
+            {
+                Log.Warning("No city bus prefab; skipping the depot count.");
+                return;
+            }
+
             int total = 0;
             int busDepots = 0;
 
@@ -104,14 +115,13 @@ namespace AutomatedPublicTransportPlanning
                 }
 
                 DepotAI depot = info.m_buildingAI as DepotAI;
-                if (depot != null && depot.m_transportInfo != null &&
-                    depot.m_transportInfo.m_transportType == TransportInfo.TransportType.Bus)
+                if (depot != null && depot.m_transportInfo == cityBus)
                 {
                     busDepots++;
                 }
             }
 
-            Log.Info("Buildings: " + total + ", of which bus depots: " + busDepots);
+            Log.Info("Buildings: " + total + ", of which city bus depots: " + busDepots);
 
             if (busDepots == 0)
             {

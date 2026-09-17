@@ -43,7 +43,18 @@ namespace AutomatedPublicTransportPlanning.Planning
                 // The level is a stable enum, so prefer it over the prefab name.
                 if (info.m_class != null && info.m_class.m_level == ItemClass.Level.Level1)
                 {
-                    exactMatch = info;
+                    // Level1 is what the stock city bus uses, but nothing guarantees a
+                    // mod-added prefab will not also claim it. Keep the first and say
+                    // so, rather than letting load order decide silently.
+                    if (exactMatch == null)
+                    {
+                        exactMatch = info;
+                    }
+                    else
+                    {
+                        Log.Warning("More than one Level1 Bus prefab: keeping '" + exactMatch.name +
+                                    "', ignoring '" + info.name + "'.");
+                    }
                 }
                 else if (firstNonIntercity == null &&
                          info.name != null && info.name.IndexOf(IntercityMarker) < 0)

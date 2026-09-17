@@ -42,5 +42,26 @@ namespace AutomatedPublicTransportPlanning.Util
                 // Nothing useful left to do; swallowing beats crashing the game.
             }
         }
+
+        /// <summary>
+        /// Runs an action, turning anything it throws into a log line.
+        ///
+        /// Every entry point the game can call into — button handlers, extension
+        /// callbacks — goes through this. An exception escaping one of those lands in
+        /// the game's own dispatcher, and whether that dispatcher swallows it or lets
+        /// it bring the session down is not something worth finding out in a player's
+        /// city.
+        /// </summary>
+        public static void Guard(string context, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                Exception(context, e);
+            }
+        }
     }
 }
