@@ -42,14 +42,43 @@ namespace AutomatedPublicTransportPlanning.Planning
         /// roughly a lane width away from where the game would, which is close enough
         /// for the path finder's 32m search to usually recover — and therefore fails
         /// intermittently rather than outright.
+        ///
+        /// IMPORTANT — the returned position is NOT free to slide along the segment.
+        /// Both branches of TransportTool.GetStopPosition pass a hardcoded lane offset
+        /// of 0.5019608 (TransportTool lines 1110 and 1129), and
+        /// NetLane.CalculateStopPositionAndDirection evaluates the lane bezier at it.
+        /// So a segment offers exactly one stop position per lane: the lane's midpoint.
+        ///
+        /// That is why the hint parameter is called sideHint and not "near": it only
+        /// decides WHICH lane is chosen, never where along the segment the stop lands.
+        /// Passing a building entrance and expecting the stop to appear next to it
+        /// silently yields the segment midpoint instead — over 50m out on a long rural
+        /// segment. Callers that need finer spacing must pick a different segment.
+        ///
+        /// Known defect S13: a centreline point is equidistant from both sidewalks, and
+        /// NetSegment.GetClosestLanePosition breaks that tie with a strict "&lt;" while
+        /// walking m_lanes in declaration order — so the side, and with it the travel
+        /// direction, is effectively arbitrary. Callers that care must pass a sideHint
+        /// that is genuinely offset towards the side they want. Resolving this properly
+        /// needs the corridor-direction concept that does not exist yet.
         /// </summary>
-        public static bool TryGetStopPosition(ushort segmentId, Vector3 near, TransportInfo info,
+        public static bool TryGetStopPosition(ushort segmentId, Vector3 sideHint, TransportInfo info,
                                               out Vector3 stopPosition, out bool fixedPlatform)
         {
             stopPosition = Vector3.zero;
             fixedPlatform = false;
 
             if (segmentId == 0 || info == null)
+            {
+                return false;
+            }
+
+            // The original wraps its whole segment branch in this test
+            // (TransportTool line 1057) and sends pedestrian lines to the building
+            // branch instead, which this class does not implement. Without the gate a
+            // walking-tour line would be handed a sidewalk position the game would
+            // never have offered.
+            if (info.m_transportType == TransportInfo.TransportType.Pedestrian)
             {
                 return false;
             }
@@ -76,7 +105,7 @@ namespace AutomatedPublicTransportPlanning.Planning
             float pedestrianOffset;
 
             if (!net.m_segments.m_buffer[segmentId].GetClosestLanePosition(
-                    near,
+                    sideHint,
                     NetInfo.LaneType.Pedestrian,
                     VehicleInfo.VehicleType.None,
                     info.vehicleCategory,
@@ -221,6 +250,15 @@ namespace AutomatedPublicTransportPlanning.Planning
         /// forward-direction and backward-direction lanes, not a pedestrian and a
         /// vehicle position. pathPosB is legitimately zero on a one-way street, so
         /// testing it rejects perfectly good stops.
+        ///
+        /// Known defect S15 — this test is LOOSER than the one that actually decides
+        /// whether a stop works. TransportLineAI.UpdateLaneConnection repeats the
+        /// search with requireConnect = true and the line's real vehicle category, and
+        /// for a vehicle line additionally demands that NetSegment.GetClosestLane
+        /// succeed. If any of that fails, NetNode.m_lane stays zero, AddLaneConnection
+        /// never runs, and the stop silently has no lane to serve it. Passing here is
+        /// therefore necessary but not sufficient: confirm with HasLaneConnection once
+        /// the stops exist.
         /// </summary>
         public static bool CanAnchorStop(Vector3 position, TransportInfo info)
         {
@@ -254,12 +292,47 @@ namespace AutomatedPublicTransportPlanning.Planning
         }
 
         /// <summary>
+        /// Whether the game has actually bound a lane to this stop node.
+        ///
+        /// TransportLineAI.UpdateLaneConnection writes NetNode.m_lane and then
+        /// AddLaneConnection sets the Stop flag on that lane. A node whose m_lane is
+        /// still zero is a dead stop: it looks fine, reports no problem flag, and no
+        /// vehicle can ever serve it. This is the only reliable way to tell.
+        ///
+        /// UpdateLaneConnection runs asynchronously, so give the simulation a few
+        /// frames after creating the stops before trusting a false here.
+        /// </summary>
+        public static bool HasLaneConnection(ushort nodeId)
+        {
+            if (nodeId == 0)
+            {
+                return false;
+            }
+
+            NetManager net = Singleton<NetManager>.instance;
+
+            if ((net.m_nodes.m_buffer[nodeId].m_flags & NetNode.Flags.Created) == NetNode.Flags.None)
+            {
+                return false;
+            }
+
+            return net.m_nodes.m_buffer[nodeId].m_lane != 0U;
+        }
+
+        /// <summary>
         /// Whether a segment is a road this transport type could serve.
         ///
         /// The vehicle test is on m_vehicleCategories rather than m_vehicleTypes: the
         /// latter only goes as far as "Car", which cannot tell a road that allows
-        /// buses from one that does not. This mirrors what the game's own road picker
-        /// (PublicTransportPanel.IsRoadEligibleToPublicTransport) checks.
+        /// buses from one that does not. NetInfo.InitializePrefab builds
+        /// m_vehicleCategories by unioning the categories of every Vehicle or
+        /// TransportVehicle lane whose m_vehicleType is not None, and
+        /// NetInfo.Lane.CheckType is what the game itself tests a lane against when
+        /// picking one — so this is a cheap segment-level prefilter for the same rule.
+        ///
+        /// It is deliberately NOT the check PublicTransportPanel does. That one decides
+        /// which road prefabs appear under the toolbar's public-transport tab, and it
+        /// excludes roads that also allow trams — roads a bus stop must accept.
         ///
         /// The excluded flags are the same ones PathManager.FindPathPosition skips, so
         /// ruling them out here avoids offering candidates that could never anchor.

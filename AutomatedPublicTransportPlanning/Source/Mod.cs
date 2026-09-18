@@ -41,10 +41,52 @@ namespace AutomatedPublicTransportPlanning
             // Throwaway controls for the save round-trip spike. These write to the
             // loaded city, so they are kept in their own clearly labelled group and
             // will be removed once the spike has served its purpose.
+            //
+            // Buttons 1 and 3 change the player's city, and this settings page is
+            // reachable by anyone who merely opens the content manager. They are
+            // therefore disarmed until the checkbox below is ticked, so that no single
+            // stray click can alter a save. The arming resets every time the page is
+            // opened; it is deliberately not remembered.
+            s_spikeArmed = false;
+
             UIHelperBase spike = helper.AddGroup("Spike 1 - save round trip (writes to your city)");
-            spike.AddButton("1. Create a test bus line", Guarded("create test line", SaveRoundTripSpike.CreateTestLine));
+            spike.AddCheckbox("Enable these buttons - they change the city you have loaded",
+                              false, OnSpikeArmedChanged);
+            spike.AddButton("1. Create a test bus line", Guarded("create test line", ArmedOnly(SaveRoundTripSpike.CreateTestLine)));
             spike.AddButton("2. Report test lines", Guarded("report test lines", SaveRoundTripSpike.ReportTestLines));
-            spike.AddButton("3. Remove test lines", Guarded("remove test lines", SaveRoundTripSpike.RemoveTestLines));
+            spike.AddButton("3. Remove test lines", Guarded("remove test lines", ArmedOnly(SaveRoundTripSpike.RemoveTestLines)));
+        }
+
+        /// <summary>
+        /// Whether the spike's writing buttons are currently allowed to act. Static
+        /// because OnSettingsUI hands the game delegates that outlive this call.
+        /// </summary>
+        private static bool s_spikeArmed;
+
+        private static void OnSpikeArmedChanged(bool isChecked)
+        {
+            s_spikeArmed = isChecked;
+            Log.Info(isChecked
+                ? "Spike buttons armed. Buttons 1 and 3 will now change the loaded city."
+                : "Spike buttons disarmed.");
+        }
+
+        /// <summary>
+        /// Blocks a handler until the player has explicitly armed the spike group.
+        /// Button 2 is read-only and is not wrapped.
+        /// </summary>
+        private static OnButtonClicked ArmedOnly(OnButtonClicked handler)
+        {
+            return delegate
+            {
+                if (!s_spikeArmed)
+                {
+                    Log.Warning("Ignored: tick the checkbox above first. These buttons change your city.");
+                    return;
+                }
+
+                handler();
+            };
         }
 
         /// <summary>

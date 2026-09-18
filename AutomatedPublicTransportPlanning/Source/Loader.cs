@@ -12,6 +12,13 @@ namespace AutomatedPublicTransportPlanning
     /// against a real save before any planning code is written.
     ///
     /// Everything here is read-only. Nothing is created, modified or deleted.
+    ///
+    /// Read-only is not the same as thread-safe. OnLevelLoaded runs on the Unity main
+    /// thread, and LoadingManager raises it after m_loadingComplete is already set, so
+    /// the simulation thread is by then stepping every manager — it does so even at
+    /// speed zero. Walking m_segments and m_buildings from here races those writes.
+    /// The whole survey therefore runs inside SimulationManager.AddAction, which is
+    /// executed on the simulation thread itself.
     /// </summary>
     public sealed class Loader : LoadingExtensionBase
     {
@@ -26,9 +33,25 @@ namespace AutomatedPublicTransportPlanning
                 return;
             }
 
+            if (!Singleton<SimulationManager>.exists)
+            {
+                Log.Warning("No SimulationManager; survey skipped.");
+                return;
+            }
+
+            // Queued, not run here. AddAction does not split work across frames — the
+            // whole delegate runs inside one simulation step — so only work that is
+            // both short and safe to do atomically belongs in it. The survey measured
+            // 2ms over a full city, which qualifies.
+            LoadMode loadedAs = mode;
+            Singleton<SimulationManager>.instance.AddAction(delegate { RunSurvey(loadedAs); });
+        }
+
+        private static void RunSurvey(LoadMode mode)
+        {
             try
             {
-                Log.Info("City loaded (" + mode + "). Running read-only survey.");
+                Log.Info("City loaded (" + mode + "). Running read-only survey on the simulation thread.");
                 ReportTransportPrefabs();
                 ReportBusDepots();
                 ReportStopCapableSegments();

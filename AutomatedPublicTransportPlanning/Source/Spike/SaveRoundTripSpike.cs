@@ -123,11 +123,27 @@ namespace AutomatedPublicTransportPlanning.Spike
                 return;
             }
 
+            // The name is the only handle that survives a save/load round trip, so it
+            // is also the only way the report and remove buttons can find this line
+            // again. A rename that quietly failed would leave the player with a line
+            // this mod can no longer clean up, which breaks the one-click rollback rule
+            // — so it is treated as a build failure.
             string name = TestLinePrefix + " " + DateTime.Now.ToString("HH:mm:ss");
+            bool renamed = false;
             IEnumerator<bool> rename = tm.SetLineName(lineId, name);
             while (rename.MoveNext())
             {
-                // SetLineName does its work before it yields, so draining it here is enough.
+                // SetLineName does its work before it yields; the last value it yields
+                // is the success flag.
+                renamed = rename.Current;
+            }
+
+            if (!renamed)
+            {
+                Log.Error("SetLineName failed for line " + lineId +
+                          ". Rolling it back rather than leaving a line the remove button cannot find.");
+                tm.ReleaseLine(lineId);
+                return;
             }
 
             tm.UpdateLine(lineId);
@@ -312,6 +328,7 @@ namespace AutomatedPublicTransportPlanning.Spike
                 int stopCount = tm.m_lines.m_buffer[lineId].CountStops(lineId);
                 int notConnected = 0;
                 int pathFailed = 0;
+                int noLane = 0;
 
                 for (int i = 0; i < stopCount; i++)
                 {
@@ -319,6 +336,15 @@ namespace AutomatedPublicTransportPlanning.Spike
                     if (node == 0)
                     {
                         continue;
+                    }
+
+                    // The decisive one. A stop whose node never got a lane bound to it
+                    // is dead: no Stop flag was written, no vehicle can serve it, and
+                    // neither LineNotConnected nor PathFailed says so. Without this the
+                    // report can call a broken line healthy.
+                    if (!StopPlacement.HasLaneConnection(node))
+                    {
+                        noLane++;
                     }
 
                     if ((net.m_nodes.m_buffer[node].m_problems & Notification.Problem1.LineNotConnected).IsNotNone)
@@ -348,7 +374,16 @@ namespace AutomatedPublicTransportPlanning.Spike
                   .Append("  targetVehicles=").Append(tm.m_lines.m_buffer[lineId].CalculateTargetVehicleCount())
                   .Append("  vehicles=").Append(CountVehicles(lineId))
                   .Append("\n    stopsNotConnected=").Append(notConnected)
-                  .Append("  stopsOnFailedPaths=").Append(pathFailed);
+                  .Append("  stopsOnFailedPaths=").Append(pathFailed)
+                  .Append("  stopsWithNoLane=").Append(noLane);
+
+                if (noLane != 0)
+                {
+                    sb.Append("\n    WARNING: ").Append(noLane)
+                      .Append(" stop(s) have no lane bound. They are dead stops even though")
+                      .Append(" no problem flag is set. If this was checked immediately after")
+                      .Append(" building, retry once the simulation has run a few frames.");
+                }
             }
 
             if (found == 0)
