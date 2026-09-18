@@ -154,22 +154,27 @@
 
   function computeStats(stopCount, lineCount) {
     var cov = +document.getElementById("coverage").value;
-    var head = +document.getElementById("headway").value;
-    var bud = +document.getElementById("budget").value;
+    var spacing = +document.getElementById("spacing").value;
+    var maxDetour = +document.getElementById("detour").value / 100;
 
     var coverage = Math.min(99, Math.round(cov * (0.82 + lineCount * 0.03)));
-    // Locale-aware decimal separator: "3.6" in en, "3,6" in de/fr/ru...
-    var wait = (head / 2 + 0.6).toLocaleString(window.i18n.bcp47(), {
-      minimumFractionDigits: 1, maximumFractionDigits: 1
-    });
-    var riders = Math.round(stopCount * 340 * (coverage / 100) * (1 + (15 - head) * 0.04));
-    var cost = Math.round((lineCount * 1800 + stopCount * 260) * (1 + bud * 0.08));
+
+    // Routes come out somewhere under the ceiling the player set, never above it —
+    // in the real planner that ceiling is a hard threshold, not a target.
+    var detour = 1 + (maxDetour - 1) * (0.45 + Math.min(lineCount, 8) * 0.03);
+
+    // Wider spacing means each stop draws from a larger catchment.
+    var riders = Math.round(stopCount * 260 * (coverage / 100) * (spacing / 400));
+    var perStop = stopCount > 0 ? Math.round(riders / stopCount) : 0;
+    var cost = Math.round(lineCount * 2400 + stopCount * 260);
 
     document.getElementById("sLines").textContent = lineCount;
     document.getElementById("sStops").textContent = stopCount;
     document.getElementById("sCover").textContent = coverage + "%";
-    document.getElementById("sWait").textContent = wait + " " + t("unitMin");
-    document.getElementById("sRiders").textContent = nfmt(riders);
+    document.getElementById("sDetour").textContent = detour.toLocaleString(window.i18n.bcp47(), {
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
+    document.getElementById("sPassengers").textContent = nfmt(perStop);
     document.getElementById("sCost").textContent = "₡" + nfmt(cost);
   }
 
@@ -187,15 +192,15 @@
     clearNetwork();
 
     var seedBase = +document.getElementById("coverage").value * 31
-      + +document.getElementById("headway").value * 17
-      + +document.getElementById("budget").value * 7;
+      + +document.getElementById("spacing").value * 17
+      + +document.getElementById("detour").value * 7;
 
     setTimeout(function () { log(t("logDemand")); }, 450);
     setTimeout(function () { log(t("logRoute")); }, 900);
 
     var totalStops = 0, lineCount = 0;
-    var budget = +document.getElementById("budget").value;
-    var perMode = Math.max(1, Math.round(budget / 3));
+    var coverageTarget = +document.getElementById("coverage").value;
+    var perMode = Math.max(1, Math.round(coverageTarget / 35));
 
     modes.forEach(function (mode, mi) {
       for (var k = 0; k < perMode; k++) {
@@ -245,8 +250,8 @@
   function bindControls() {
     var pairs = [
       ["coverage", "coverageOut", function (v) { return v + "%"; }],
-      ["headway", "headwayOut", function (v) { return v + " " + t("unitMin"); }],
-      ["budget", "budgetOut", function (v) { return v + " / 10"; }]
+      ["spacing", "spacingOut", function (v) { return v + " " + t("unitMetre"); }],
+      ["detour", "detourOut", function (v) { return (v / 100).toFixed(2); }]
     ];
     pairs.forEach(function (p) {
       var input = document.getElementById(p[0]), out = document.getElementById(p[1]);
@@ -295,8 +300,8 @@
     // i18n renders once before this module has looked up its elements.
     if (!el.legend) return;
     renderLegend();
-    var hw = document.getElementById("headway");
-    if (hw) document.getElementById("headwayOut").textContent = hw.value + " " + t("unitMin");
+    var sp = document.getElementById("spacing");
+    if (sp) document.getElementById("spacingOut").textContent = sp.value + " " + t("unitMetre");
     if (!state.running) {
       el.status.textContent = state.planned ? t("statusDone") : t("statusIdle");
       if (state.planned) {

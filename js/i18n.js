@@ -51,11 +51,11 @@
     demoTitle: "Live demo: simulated planner",
     demoLead: "Tune the parameters and press Auto-plan to watch a network appear. The city, the data and the algorithm are all mock-ups.",
     ctrlTitle: "Planning parameters",
-    ctrlCoverage: "Target coverage", ctrlHeadway: "Target headway", ctrlBudget: "Budget level", ctrlModes: "Enabled modes",
+    ctrlCoverage: "Target coverage", ctrlSpacing: "Stop spacing", ctrlDetour: "Max detour ratio", ctrlModes: "Enabled modes",
     modeBus: "Bus", modeMetro: "Metro", modeTram: "Tram",
     btnPlan: "Auto-plan network", btnAdjust: "Refine existing lines", btnReset: "Delete all & replan",
-    statLines: "Lines", statStops: "Stops", statCover: "Coverage", statWait: "Avg wait", statRiders: "Daily riders", statCost: "Weekly cost",
-    unitMin: "min",
+    statLines: "Lines", statStops: "Stops", statCover: "Coverage", statDetour: "Detour ratio", statPassengers: "Passengers per stop", statCost: "Weekly cost",
+    unitMetre: "m",
 
     logIdle: "> Idle. Set your parameters and press Auto-plan network.",
     logScan: "> Scanning city zones...",
@@ -79,7 +79,7 @@
     guRowKeep: "Keep manual lines", guRowKeepV: "Yes",
     guPlanBtn: "Start planning",
     guLinesHint: "Auto-generated lines are tagged, so they can be deleted or locked individually.",
-    guOpt1: "Buy vehicles after planning", guOpt2: "Avoid overlapping existing lines", guOpt3: "Allow long cross-city routes", guOpt4: "Default headway",
+    guOpt1: "Buy vehicles after planning", guOpt2: "Avoid overlapping existing lines", guOpt3: "Allow long cross-city routes", guOpt4: "Default stop spacing",
 
     insTitle: "Installation",
     ins1: "Subscribe to \"Automated Public Transport Planning\" on the Steam Workshop.",

@@ -117,15 +117,15 @@
         </label>
 
         <label class="ctrl">
-          <span data-i18n="ctrlHeadway"></span>
-          <input type="range" id="headway" min="2" max="15" value="6">
-          <output id="headwayOut">6 min</output>
+          <span data-i18n="ctrlSpacing"></span>
+          <input type="range" id="spacing" min="200" max="800" step="50" value="400">
+          <output id="spacingOut">400 m</output>
         </label>
 
         <label class="ctrl">
-          <span data-i18n="ctrlBudget"></span>
-          <input type="range" id="budget" min="1" max="10" value="6">
-          <output id="budgetOut">6 / 10</output>
+          <span data-i18n="ctrlDetour"></span>
+          <input type="range" id="detour" min="120" max="250" step="5" value="180">
+          <output id="detourOut">1.80</output>
         </label>
 
         <fieldset class="modes">
@@ -145,8 +145,8 @@
           <div class="stat"><span data-i18n="statLines"></span><b id="sLines">0</b></div>
           <div class="stat"><span data-i18n="statStops"></span><b id="sStops">0</b></div>
           <div class="stat"><span data-i18n="statCover"></span><b id="sCover">0%</b></div>
-          <div class="stat"><span data-i18n="statWait"></span><b id="sWait">—</b></div>
-          <div class="stat"><span data-i18n="statRiders"></span><b id="sRiders">0</b></div>
+          <div class="stat"><span data-i18n="statDetour"></span><b id="sDetour">—</b></div>
+          <div class="stat"><span data-i18n="statPassengers"></span><b id="sPassengers">0</b></div>
           <div class="stat"><span data-i18n="statCost"></span><b id="sCost">0</b></div>
         </div>
       </aside>
