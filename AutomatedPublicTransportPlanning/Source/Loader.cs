@@ -47,10 +47,33 @@ namespace AutomatedPublicTransportPlanning
             Singleton<SimulationManager>.instance.AddAction(delegate { RunSurvey(loadedAs); });
         }
 
+        /// <summary>
+        /// Drops anything this mod is still holding from the level being torn down.
+        ///
+        /// The settings panel's components are the case that matters: they are keyed to
+        /// a panel the game destroys, and without this they would sit in a static list
+        /// until the player next opened the settings page — which they may never do.
+        /// </summary>
+        public override void OnLevelUnloading()
+        {
+            Mod.ReleaseTrackedUI();
+            base.OnLevelUnloading();
+        }
+
         private static void RunSurvey(LoadMode mode)
         {
             try
             {
+                // Queued work runs a step or more after it was queued, and the player
+                // can leave in between. Nothing below is safe against a world that has
+                // been torn down, so check rather than rely on the catch: an exception
+                // here would be logged once and look like a defect in the survey.
+                if (!Singleton<BuildingManager>.exists || !Singleton<NetManager>.exists)
+                {
+                    Log.Info("Level went away before the survey ran; skipped.");
+                    return;
+                }
+
                 Log.Info("City loaded (" + mode + "). Running read-only survey on the simulation thread.");
                 ReportTransportPrefabs();
                 ReportBusDepots();

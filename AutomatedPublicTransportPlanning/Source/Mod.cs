@@ -46,6 +46,20 @@ namespace AutomatedPublicTransportPlanning
             new List<KeyValuePair<object, string>>();
 
         /// <summary>
+        /// Lets go of the tracked components.
+        ///
+        /// Clearing only at the top of OnSettingsUI was not enough: a player who opens
+        /// the settings page once and never returns leaves this list holding wrappers
+        /// for components the game has destroyed, across level loads, for the rest of
+        /// the session. Small, but it is this mod's own litter and it outlives the
+        /// thing it describes. Loader calls this when a level is torn down.
+        /// </summary>
+        public static void ReleaseTrackedUI()
+        {
+            s_localised.Clear();
+        }
+
+        /// <summary>
         /// Called when the player opens this mod's entry in the content manager.
         /// UIHelperBase only covers simple option controls; the in-game planning
         /// panel is built separately against the game's own UI framework.
