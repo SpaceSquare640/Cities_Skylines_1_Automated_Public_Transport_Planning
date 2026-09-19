@@ -38,6 +38,12 @@ namespace AutomatedPublicTransportPlanning
             diagnostics.AddButton("Write a test line to the log", Guarded("diagnostics", OnDiagnosticsButton));
             diagnostics.AddButton("List bus prefabs in detail", Guarded("bus prefab dump", BusPrefabResolver.DumpBusPrefabs));
 
+            // Read-only, so it is not behind the spike arming checkbox. It does cost a
+            // brief hitch: every phase is bounded, but they all run in one simulation
+            // step because AddAction cannot split work across frames.
+            diagnostics.AddButton("Measure planning costs (brief pause)",
+                                  Guarded("performance probe", PerformanceProbe.Run));
+
             // Throwaway controls for the save round-trip spike. These write to the
             // loaded city, so they are kept in their own clearly labelled group and
             // will be removed once the spike has served its purpose.

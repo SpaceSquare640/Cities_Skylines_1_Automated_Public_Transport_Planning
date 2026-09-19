@@ -127,6 +127,7 @@
     <Compile Include="Source\Planning\BusPrefabResolver.cs" />
     <Compile Include="Source\Planning\StopPlacement.cs" />
     <Compile Include="Source\Spike\SaveRoundTripSpike.cs" />
+    <Compile Include="Source\Spike\PerformanceProbe.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
