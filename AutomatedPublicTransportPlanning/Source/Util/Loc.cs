@@ -54,23 +54,33 @@ namespace AutomatedPublicTransportPlanning.Util
             map["pt"] = "pt-BR";
             map["ru"] = "ru";
 
-            // The game ships a single Chinese locale called "zh".
-            // UNVERIFIED which variant it is: the .locale files are packed, so this
-            // could not be read from disk. Simplified is the assumption because that is
-            // what the official localisation is generally understood to be. If the game
-            // turns out to ship Traditional, this one line is the whole fix.
-            map["zh"] = "zh-Hans";
+            // The game ships a single Chinese locale called "zh", and on a stock install
+            // that is the only Chinese id it can ever report — there is no zh_CN or
+            // zh_TW file unless a workshop translation adds one.
+            //
+            // UNVERIFIED which variant that "zh" is. The .locale files are packed, so it
+            // could not be read from disk, and the language menu shows native names
+            // rather than ids. Simplified is the assumption, since that is what the
+            // official localisation is generally understood to be. If it turns out to be
+            // Traditional, this one line is the whole fix.
+            map["zh"] = "zh_CN";
 
-            // Added by workshop translations. Spellings are not verified.
+            // Added by workshop translations. Ids arrive here already lowercased with
+            // underscores turned into hyphens, so "zh_CN" and "zh-CN" both land on
+            // "zh-cn" and neither needs its own entry.
+            //
+            // The spellings themselves are not verified: no mod on this machine ships a
+            // locale file, so these cover the forms such mods conventionally use rather
+            // than forms that have been observed. Anything else falls back to English.
             map["ja"] = "ja";
             map["jp"] = "ja";
-            map["zh-cn"] = "zh-Hans";
-            map["zh-hans"] = "zh-Hans";
-            map["chs"] = "zh-Hans";
-            map["zh-tw"] = "zh-Hant";
-            map["zh-hk"] = "zh-Hant";
-            map["zh-hant"] = "zh-Hant";
-            map["cht"] = "zh-Hant";
+            map["zh-cn"] = "zh_CN";
+            map["zh-hans"] = "zh_CN";
+            map["chs"] = "zh_CN";
+            map["zh-tw"] = "zh_TW";
+            map["zh-hk"] = "zh_TW";
+            map["zh-hant"] = "zh_TW";
+            map["cht"] = "zh_TW";
 
             return map;
         }

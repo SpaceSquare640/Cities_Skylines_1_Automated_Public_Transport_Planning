@@ -38,8 +38,8 @@ namespace AutomatedPublicTransportPlanning.Util
                 new Dictionary<string, Dictionary<string, string>>();
 
             tables["en"] = English();
-            tables["zh-Hant"] = TraditionalChinese();
-            tables["zh-Hans"] = SimplifiedChinese();
+            tables["zh_TW"] = TraditionalChinese();
+            tables["zh_CN"] = SimplifiedChinese();
             tables["ja"] = Japanese();
             tables["ko"] = Korean();
             tables["de"] = German();
@@ -70,7 +70,7 @@ namespace AutomatedPublicTransportPlanning.Util
             return d;
         }
 
-        // ------------------------------------------------------------- 繁體中文
+        // ------------------------------------------------------------- zh_TW 繁體中文
 
         private static Dictionary<string, string> TraditionalChinese()
         {
@@ -88,7 +88,7 @@ namespace AutomatedPublicTransportPlanning.Util
             return d;
         }
 
-        // ------------------------------------------------------------- 简体中文
+        // ------------------------------------------------------------- zh_CN 简体中文
 
         private static Dictionary<string, string> SimplifiedChinese()
         {
