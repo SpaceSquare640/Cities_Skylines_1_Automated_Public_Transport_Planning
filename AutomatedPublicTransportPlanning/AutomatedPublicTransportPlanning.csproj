@@ -25,6 +25,15 @@
     <NoConfig>true</NoConfig>
     <FileAlignment>512</FileAlignment>
     <LangVersion>5</LangVersion>
+
+    <!--
+      The translation tables are full of non-ASCII text. Without this, a source
+      file saved as UTF-8 with no byte order mark can be read using the machine's
+      ANSI code page instead, which silently mangles every translated string
+      rather than failing the build. Pinning the compiler to UTF-8 makes the
+      result the same on any machine.
+    -->
+    <CodePage>65001</CodePage>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
@@ -124,6 +133,8 @@
     <Compile Include="Source\Mod.cs" />
     <Compile Include="Source\Loader.cs" />
     <Compile Include="Source\Util\Log.cs" />
+    <Compile Include="Source\Util\Loc.cs" />
+    <Compile Include="Source\Util\Strings.cs" />
     <Compile Include="Source\Planning\BusPrefabResolver.cs" />
     <Compile Include="Source\Planning\StopPlacement.cs" />
     <Compile Include="Source\Spike\SaveRoundTripSpike.cs" />

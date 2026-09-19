@@ -15,6 +15,11 @@ namespace AutomatedPublicTransportPlanning
         public const string ModName = "Automated Public Transport Planning";
         public const string Version = "0.1.0";
 
+        /// <summary>
+        /// The name stays in English in every language. It is how the mod is found on
+        /// the workshop and how players refer to it to each other; a translated product
+        /// name makes it unsearchable for the very players it was translated for.
+        /// </summary>
         public string Name
         {
             get { return ModName + " " + Version; }
@@ -22,7 +27,7 @@ namespace AutomatedPublicTransportPlanning
 
         public string Description
         {
-            get { return "Plans bus lines from city demand. Previews first; nothing is built until you accept a line."; }
+            get { return Loc.Get(Strings.ModDescription); }
         }
 
         /// <summary>
@@ -32,16 +37,20 @@ namespace AutomatedPublicTransportPlanning
         /// </summary>
         public void OnSettingsUI(UIHelperBase helper)
         {
-            Log.Info("Settings UI requested.");
+            // Logged in English on purpose, and it names the language the strings below
+            // were resolved to. When a player reports that the panel is in the wrong
+            // language, this line says whether the game's locale was read correctly or
+            // whether the translation table is what is wrong.
+            Log.Info("Settings UI requested. Language resolved to '" + Loc.CurrentLanguage + "'.");
 
-            UIHelperBase diagnostics = helper.AddGroup("Diagnostics");
-            diagnostics.AddButton("Write a test line to the log", Guarded("diagnostics", OnDiagnosticsButton));
-            diagnostics.AddButton("List bus prefabs in detail", Guarded("bus prefab dump", BusPrefabResolver.DumpBusPrefabs));
+            UIHelperBase diagnostics = helper.AddGroup(Loc.Get(Strings.GroupDiagnostics));
+            diagnostics.AddButton(Loc.Get(Strings.ButtonTestLog), Guarded("diagnostics", OnDiagnosticsButton));
+            diagnostics.AddButton(Loc.Get(Strings.ButtonBusPrefabs), Guarded("bus prefab dump", BusPrefabResolver.DumpBusPrefabs));
 
             // Read-only, so it is not behind the spike arming checkbox. It does cost a
             // brief hitch: every phase is bounded, but they all run in one simulation
             // step because AddAction cannot split work across frames.
-            diagnostics.AddButton("Measure planning costs (brief pause)",
+            diagnostics.AddButton(Loc.Get(Strings.ButtonMeasure),
                                   Guarded("performance probe", PerformanceProbe.Run));
 
             // Throwaway controls for the save round-trip spike. These write to the
@@ -55,12 +64,11 @@ namespace AutomatedPublicTransportPlanning
             // opened; it is deliberately not remembered.
             s_spikeArmed = false;
 
-            UIHelperBase spike = helper.AddGroup("Spike 1 - save round trip (writes to your city)");
-            spike.AddCheckbox("Enable these buttons - they change the city you have loaded",
-                              false, OnSpikeArmedChanged);
-            spike.AddButton("1. Create a test bus line", Guarded("create test line", ArmedOnly(SaveRoundTripSpike.CreateTestLine)));
-            spike.AddButton("2. Report test lines", Guarded("report test lines", SaveRoundTripSpike.ReportTestLines));
-            spike.AddButton("3. Remove test lines", Guarded("remove test lines", ArmedOnly(SaveRoundTripSpike.RemoveTestLines)));
+            UIHelperBase spike = helper.AddGroup(Loc.Get(Strings.GroupSpike));
+            spike.AddCheckbox(Loc.Get(Strings.CheckSpikeArm), false, OnSpikeArmedChanged);
+            spike.AddButton(Loc.Get(Strings.ButtonSpikeCreate), Guarded("create test line", ArmedOnly(SaveRoundTripSpike.CreateTestLine)));
+            spike.AddButton(Loc.Get(Strings.ButtonSpikeReport), Guarded("report test lines", SaveRoundTripSpike.ReportTestLines));
+            spike.AddButton(Loc.Get(Strings.ButtonSpikeRemove), Guarded("remove test lines", ArmedOnly(SaveRoundTripSpike.RemoveTestLines)));
         }
 
         /// <summary>
