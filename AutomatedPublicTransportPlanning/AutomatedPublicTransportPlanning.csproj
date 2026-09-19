@@ -91,7 +91,10 @@
       <HintPath>$(ManagedDir)\mscorlib.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="System">
+    <Reference Include="System.Xml">
+      <HintPath>$(ManagedDir)\System.Xml.dll</HintPath>
+      <Private>false</Private>
+    </Reference>    <Reference Include="System">
       <HintPath>$(ManagedDir)\System.dll</HintPath>
       <Private>false</Private>
     </Reference>
@@ -134,6 +137,7 @@
     <Compile Include="Source\Loader.cs" />
     <Compile Include="Source\Util\Log.cs" />
     <Compile Include="Source\Util\Loc.cs" />
+    <Compile Include="Source\Util\Settings.cs" />
     <Compile Include="Source\Util\Strings.cs" />
     <Compile Include="Source\Planning\BusPrefabResolver.cs" />
     <Compile Include="Source\Planning\StopPlacement.cs" />

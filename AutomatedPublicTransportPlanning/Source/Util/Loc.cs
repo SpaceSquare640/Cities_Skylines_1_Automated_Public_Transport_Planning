@@ -1,10 +1,16 @@
 using System.Collections.Generic;
-using ColossalFramework.Globalization;
 
 namespace AutomatedPublicTransportPlanning.Util
 {
     /// <summary>
-    /// Looks up a user-facing string in the language the player has the game set to.
+    /// Looks up a user-facing string in the language the player picked.
+    ///
+    /// The game's own language is deliberately not consulted. Following it would mean
+    /// mapping the game's locale ids onto these tables, and those ids are not a fixed
+    /// set: LocaleManager builds its list by reading the locale directory at runtime,
+    /// so a workshop translation can introduce an id no version of this mod has heard
+    /// of. Letting the player say what they want removes that whole problem, and it
+    /// also lets someone run the game in one language and this panel in another.
     ///
     /// English is the source language and the fallback. A key with no translation for
     /// the current language falls back to English; a key with no English entry falls
@@ -17,80 +23,82 @@ namespace AutomatedPublicTransportPlanning.Util
     /// </summary>
     public static class Loc
     {
-        /// <summary>
-        /// Language the tables are written in, and the fallback for everything else.
-        /// Matches LocaleManager.defaultLanguage.
-        /// </summary>
+        /// <summary>Language the tables are written in, and the fallback for everything else.</summary>
         public const string Fallback = "en";
-
-        /// <summary>
-        /// Maps the game's locale id onto one of our translation sets.
-        ///
-        /// The game itself ships nine locale files — de, en, es, fr, ko, pl, pt, ru, zh
-        /// (verified from Files\Locale\*.locale). LocaleManager builds its supported
-        /// list by reading that directory at runtime, so a workshop translation can add
-        /// its own file and produce an id that is not in that nine. Japanese and
-        /// Traditional Chinese only ever arrive that way.
-        ///
-        /// The ids for those added locales are therefore candidates, not verified
-        /// facts: the entries below cover the spellings such mods commonly use, and
-        /// anything unrecognised falls back to English rather than guessing.
-        /// </summary>
-        private static readonly Dictionary<string, string> LocaleIdMap = BuildLocaleIdMap();
 
         private static readonly Dictionary<string, Dictionary<string, string>> Tables = Strings.BuildTables();
 
-        private static Dictionary<string, string> BuildLocaleIdMap()
+        /// <summary>
+        /// Language tags in the order they should appear in a picker, so that the
+        /// dropdown and the stored setting cannot drift apart.
+        /// </summary>
+        public static string[] Languages
         {
-            Dictionary<string, string> map = new Dictionary<string, string>();
+            get { return Strings.LanguageOrder; }
+        }
 
-            // Shipped with the game.
-            map["en"] = "en";
-            map["de"] = "de";
-            map["es"] = "es";
-            map["fr"] = "fr";
-            map["ko"] = "ko";
-            map["pl"] = "pl";
-            map["pt"] = "pt-BR";
-            map["ru"] = "ru";
+        /// <summary>Display names, in the same order as <see cref="Languages"/>.</summary>
+        public static string[] LanguageNames
+        {
+            get { return Strings.LanguageNames; }
+        }
 
-            // The game ships a single Chinese locale called "zh", and on a stock install
-            // that is the only Chinese id it can ever report — there is no zh_CN or
-            // zh_TW file unless a workshop translation adds one.
-            //
-            // UNVERIFIED which variant that "zh" is. The .locale files are packed, so it
-            // could not be read from disk, and the language menu shows native names
-            // rather than ids. Simplified is the assumption, since that is what the
-            // official localisation is generally understood to be. If it turns out to be
-            // Traditional, this one line is the whole fix.
-            map["zh"] = "zh_CN";
+        public static string CurrentLanguage
+        {
+            get
+            {
+                string tag = Settings.Current.Language;
+                return HasLanguage(tag) ? tag : Fallback;
+            }
+        }
 
-            // Added by workshop translations. Ids arrive here already lowercased with
-            // underscores turned into hyphens, so "zh_CN" and "zh-CN" both land on
-            // "zh-cn" and neither needs its own entry.
-            //
-            // The spellings themselves are not verified: no mod on this machine ships a
-            // locale file, so these cover the forms such mods conventionally use rather
-            // than forms that have been observed. Anything else falls back to English.
-            map["ja"] = "ja";
-            map["jp"] = "ja";
-            map["zh-cn"] = "zh_CN";
-            map["zh-hans"] = "zh_CN";
-            map["chs"] = "zh_CN";
-            map["zh-tw"] = "zh_TW";
-            map["zh-hk"] = "zh_TW";
-            map["zh-hant"] = "zh_TW";
-            map["cht"] = "zh_TW";
-
-            return map;
+        public static bool HasLanguage(string tag)
+        {
+            return tag != null && Tables.ContainsKey(tag);
         }
 
         /// <summary>
-        /// The translation set in use, as one of our own language tags.
+        /// Index of the current language within <see cref="Languages"/>, for seeding a
+        /// dropdown. Falls back to English's position rather than -1.
         /// </summary>
-        public static string CurrentLanguage
+        public static int CurrentIndex
         {
-            get { return ResolveLanguage(); }
+            get
+            {
+                string tag = CurrentLanguage;
+                string[] order = Strings.LanguageOrder;
+
+                for (int i = 0; i < order.Length; i++)
+                {
+                    if (order[i] == tag)
+                    {
+                        return i;
+                    }
+                }
+
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Stores the choice and writes it out. Callers are responsible for refreshing
+        /// anything already on screen; nothing here reaches into the UI.
+        /// </summary>
+        public static void SetLanguage(string tag)
+        {
+            if (!HasLanguage(tag))
+            {
+                return;
+            }
+
+            if (Settings.Current.Language == tag)
+            {
+                return;
+            }
+
+            Settings.Current.Language = tag;
+            Settings.Current.Save();
+            Log.Info("Language set to '" + tag + "'.");
         }
 
         /// <summary>
@@ -105,9 +113,9 @@ namespace AutomatedPublicTransportPlanning.Util
             }
 
             string text;
-
             Dictionary<string, string> table;
-            if (Tables.TryGetValue(ResolveLanguage(), out table) && table.TryGetValue(key, out text))
+
+            if (Tables.TryGetValue(CurrentLanguage, out table) && table.TryGetValue(key, out text))
             {
                 return text;
             }
@@ -118,53 +126,6 @@ namespace AutomatedPublicTransportPlanning.Util
             }
 
             return key;
-        }
-
-        /// <summary>
-        /// Reads the game's current locale and maps it onto one of our tables.
-        ///
-        /// LocaleManager derives from SingletonLite, whose instance property CREATES
-        /// the singleton when it is null rather than returning null. Touching it too
-        /// early would therefore manufacture a LocaleManager whose current code is
-        /// empty — a fabricated answer rather than a missing one. The exists check is
-        /// what keeps that from happening.
-        ///
-        /// Resolved on every call rather than cached: the player can change language
-        /// from the options screen at any time, and every caller here is building UI,
-        /// where a dictionary lookup costs nothing worth measuring. Caching would mean
-        /// subscribing to the static eventLocaleChanged and owning an unsubscribe for
-        /// the lifetime of the process, which is a great deal more to get wrong.
-        /// </summary>
-        private static string ResolveLanguage()
-        {
-            if (!LocaleManager.exists)
-            {
-                return Fallback;
-            }
-
-            string code = LocaleManager.instance.language;
-            if (string.IsNullOrEmpty(code))
-            {
-                return Fallback;
-            }
-
-            code = code.ToLowerInvariant().Replace('_', '-');
-
-            string mapped;
-            if (LocaleIdMap.TryGetValue(code, out mapped))
-            {
-                return mapped;
-            }
-
-            // "pt-br" and the like: fall back on the part before the separator so a
-            // regional variant still finds its base language.
-            int dash = code.IndexOf('-');
-            if (dash > 0 && LocaleIdMap.TryGetValue(code.Substring(0, dash), out mapped))
-            {
-                return mapped;
-            }
-
-            return Fallback;
         }
     }
 }

@@ -21,6 +21,30 @@ namespace AutomatedPublicTransportPlanning.Util
     /// </summary>
     public static class Strings
     {
+        /// <summary>
+        /// Language tags, in the order a picker should offer them. The stored setting
+        /// and the dropdown both read this, so they cannot drift apart.
+        /// </summary>
+        internal static readonly string[] LanguageOrder =
+        {
+            "en", "zh_TW", "zh_CN", "ja", "ko", "de", "fr", "es", "pt-BR", "ru", "pl"
+        };
+
+        /// <summary>
+        /// What each language calls itself, in the same order.
+        ///
+        /// These are NOT translated and must never be. Someone looking for their own
+        /// language needs to find it written the way they write it — rendering the list
+        /// in whatever language the panel happens to be in right now would hide the very
+        /// entry they are hunting for.
+        /// </summary>
+        internal static readonly string[] LanguageNames =
+        {
+            "English", "繁體中文", "简体中文", "日本語", "한국어",
+            "Deutsch", "Français", "Español", "Português", "Русский", "Polski"
+        };
+
+        public const string LabelLanguage = "label.language";
         public const string ModDescription = "mod.description";
         public const string GroupDiagnostics = "group.diagnostics";
         public const string ButtonTestLog = "btn.testLog";
@@ -57,6 +81,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> English()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "Language";
             d[ModDescription] = "Plans bus lines from city demand. Previews first; nothing is built until you accept a line.";
             d[GroupDiagnostics] = "Diagnostics";
             d[ButtonTestLog] = "Write a test line to the log";
@@ -75,6 +100,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> TraditionalChinese()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "語言";
             d[ModDescription] = "依城市需求規劃公車路線。先預覽，你確認之後才會實際建立。";
             d[GroupDiagnostics] = "診斷";
             d[ButtonTestLog] = "將測試路線寫入記錄檔";
@@ -93,6 +119,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> SimplifiedChinese()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "语言";
             d[ModDescription] = "根据城市需求规划公交线路。先预览，你确认之后才会实际建立。";
             d[GroupDiagnostics] = "诊断";
             d[ButtonTestLog] = "将测试线路写入日志";
@@ -111,6 +138,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> Japanese()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "言語";
             d[ModDescription] = "都市の需要からバス路線を計画します。まずプレビューを表示し、承認するまで何も建設しません。";
             d[GroupDiagnostics] = "診断";
             d[ButtonTestLog] = "テスト路線をログに書き出す";
@@ -129,6 +157,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> Korean()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "언어";
             d[ModDescription] = "도시 수요를 바탕으로 버스 노선을 계획합니다. 먼저 미리 보기를 제공하며, 수락하기 전에는 아무것도 건설하지 않습니다.";
             d[GroupDiagnostics] = "진단";
             d[ButtonTestLog] = "테스트 노선을 로그에 기록";
@@ -147,6 +176,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> German()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "Sprache";
             d[ModDescription] = "Plant Buslinien anhand des Bedarfs der Stadt. Zeigt zuerst eine Vorschau; es wird nichts gebaut, bevor Sie eine Linie annehmen.";
             d[GroupDiagnostics] = "Diagnose";
             d[ButtonTestLog] = "Testlinie ins Protokoll schreiben";
@@ -165,6 +195,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> French()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "Langue";
             d[ModDescription] = "Planifie des lignes de bus à partir de la demande de la ville. Aperçu d'abord ; rien n'est construit tant que vous n'avez pas accepté une ligne.";
             d[GroupDiagnostics] = "Diagnostic";
             d[ButtonTestLog] = "Écrire une ligne de test dans le journal";
@@ -183,6 +214,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> Spanish()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "Idioma";
             d[ModDescription] = "Planifica líneas de autobús según la demanda de la ciudad. Primero muestra una vista previa; no se construye nada hasta que aceptes una línea.";
             d[GroupDiagnostics] = "Diagnóstico";
             d[ButtonTestLog] = "Escribir una línea de prueba en el registro";
@@ -201,6 +233,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> Portuguese()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "Idioma";
             d[ModDescription] = "Planeja linhas de ônibus a partir da demanda da cidade. Mostra uma prévia primeiro; nada é construído até você aceitar uma linha.";
             d[GroupDiagnostics] = "Diagnóstico";
             d[ButtonTestLog] = "Escrever uma linha de teste no log";
@@ -219,6 +252,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> Russian()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "Язык";
             d[ModDescription] = "Планирует автобусные маршруты по спросу города. Сначала показывает предпросмотр; ничего не строится, пока вы не примете маршрут.";
             d[GroupDiagnostics] = "Диагностика";
             d[ButtonTestLog] = "Записать тестовый маршрут в журнал";
@@ -237,6 +271,7 @@ namespace AutomatedPublicTransportPlanning.Util
         private static Dictionary<string, string> Polish()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
+            d[LabelLanguage] = "Język";
             d[ModDescription] = "Planuje linie autobusowe na podstawie zapotrzebowania miasta. Najpierw pokazuje podgląd; nic nie powstaje, dopóki nie zaakceptujesz linii.";
             d[GroupDiagnostics] = "Diagnostyka";
             d[ButtonTestLog] = "Zapisz linię testową do dziennika";
